@@ -117,63 +117,79 @@ void main() {
   });
 
   group('ToggleFavoriteEvent', () {
-    final updatedCharacter = tCharacter.copyWith(isFavorite: true);
+    setUp(() {
+      when(mockGetCharacters(any)).thenAnswer(
+          (_) async => Right<Failure, List<Character>>([tCharacter]));
+      bloc.add(const LoadCharacters());
+    });
 
-    test(
-      'should emit updated characters list when toggling favorite succeeds',
-      () async {
-        // arrange
-        when(mockGetCharacters(any)).thenAnswer(
-            (_) async => Right<Failure, List<Character>>(tCharacters));
-        when(mockToggleFavorite(any)).thenAnswer(
-            (_) async => Right<Failure, List<String>>([tCharacter.url]));
+    test('should call toggleFavorite with correct URL', () async {
+      // arrange
+      when(mockToggleFavorite(any)).thenAnswer(
+          (_) async => Right<Failure, List<String>>([tCharacter.url]));
 
-        // Load initial characters
-        bloc.add(const LoadCharacters());
-        await untilCalled(mockGetCharacters(any));
+      await untilCalled(mockGetCharacters(any));
 
-        // act
-        bloc.add(ToggleFavoriteEvent(character: tCharacter));
+      // act
+      bloc.add(ToggleFavoriteEvent(character: tCharacter));
 
-        // assert
-        await expectLater(
-          bloc.stream,
-          emitsInOrder([
-            CharacterLoaded(characters: tCharacters),
-            CharacterLoaded(characters: [updatedCharacter]),
-          ]),
-        );
-        verify(mockToggleFavorite(tCharacter.url)).called(1);
-      },
-    );
+      // assert
+      await untilCalled(mockToggleFavorite(any));
+      verify(mockToggleFavorite(tCharacter.url)).called(1);
+    });
 
-    test(
-      'should emit CharacterError when toggling favorite fails',
-      () async {
-        // arrange
-        when(mockGetCharacters(any)).thenAnswer(
-            (_) async => Right<Failure, List<Character>>(tCharacters));
-        when(mockToggleFavorite(any))
-            .thenAnswer((_) async => const Left(CacheFailure()));
+    test('should emit error state when toggleFavorite fails', () async {
+      // arrange
+      when(mockToggleFavorite(any))
+          .thenAnswer((_) async => const Left(CacheFailure()));
 
-        // Load initial characters
-        bloc.add(const LoadCharacters());
-        await untilCalled(mockGetCharacters(any));
+      await untilCalled(mockGetCharacters(any));
 
-        // act
-        bloc.add(ToggleFavoriteEvent(character: tCharacter));
+      // act
+      bloc.add(ToggleFavoriteEvent(character: tCharacter));
 
-        // assert
-        await expectLater(
-          bloc.stream,
-          emitsInOrder([
-            CharacterLoaded(characters: tCharacters),
-            const CharacterError(message: 'Error de caché'),
-          ]),
-        );
-        verify(mockToggleFavorite(tCharacter.url)).called(1);
-      },
-    );
+      // assert
+      await expectLater(
+        bloc.stream,
+        emits(const CharacterError(message: 'Error de caché')),
+      );
+    });
+
+    test('should maintain character list order after toggle', () async {
+      // arrange
+      final secondCharacter = tCharacter.copyWith(
+        name: 'Leia',
+        url: 'https://swapi.dev/api/people/2/',
+      );
+
+      when(mockGetCharacters(any))
+          .thenAnswer((_) async => Right<Failure, List<Character>>([
+                tCharacter,
+                secondCharacter,
+              ]));
+
+      when(mockToggleFavorite(any)).thenAnswer(
+          (_) async => Right<Failure, List<String>>([tCharacter.url]));
+
+      bloc.add(const LoadCharacters());
+      await untilCalled(mockGetCharacters(any));
+
+      // act
+      bloc.add(ToggleFavoriteEvent(character: tCharacter));
+
+      // assert
+      await expectLater(
+        bloc.stream,
+        emits(
+          CharacterLoaded(
+            characters: [
+              tCharacter.copyWith(isFavorite: true),
+              secondCharacter,
+            ],
+          ),
+        ),
+      );
+    });
   });
 
   group('FilterFavorites', () {
@@ -274,5 +290,81 @@ void main() {
         );
       },
     );
+  });
+
+  group('ToggleFavoriteEvent', () {
+    setUp(() {
+      when(mockGetCharacters(any)).thenAnswer(
+          (_) async => Right<Failure, List<Character>>([tCharacter]));
+      bloc.add(const LoadCharacters());
+    });
+
+    test('should call toggleFavorite with correct URL', () async {
+      // arrange
+      when(mockToggleFavorite(any)).thenAnswer(
+          (_) async => Right<Failure, List<String>>([tCharacter.url]));
+
+      await untilCalled(mockGetCharacters(any));
+
+      // act
+      bloc.add(ToggleFavoriteEvent(character: tCharacter));
+
+      // assert
+      await untilCalled(mockToggleFavorite(any));
+      verify(mockToggleFavorite(tCharacter.url)).called(1);
+    });
+
+    test('should emit error state when toggleFavorite fails', () async {
+      // arrange
+      when(mockToggleFavorite(any))
+          .thenAnswer((_) async => const Left(CacheFailure()));
+
+      await untilCalled(mockGetCharacters(any));
+
+      // act
+      bloc.add(ToggleFavoriteEvent(character: tCharacter));
+
+      // assert
+      await expectLater(
+        bloc.stream,
+        emits(const CharacterError(message: 'Error de caché')),
+      );
+    });
+
+    test('should maintain character list order after toggle', () async {
+      // arrange
+      final secondCharacter = tCharacter.copyWith(
+        name: 'Leia',
+        url: 'https://swapi.dev/api/people/2/',
+      );
+
+      when(mockGetCharacters(any))
+          .thenAnswer((_) async => Right<Failure, List<Character>>([
+                tCharacter,
+                secondCharacter,
+              ]));
+
+      when(mockToggleFavorite(any)).thenAnswer(
+          (_) async => Right<Failure, List<String>>([tCharacter.url]));
+
+      bloc.add(const LoadCharacters());
+      await untilCalled(mockGetCharacters(any));
+
+      // act
+      bloc.add(ToggleFavoriteEvent(character: tCharacter));
+
+      // assert
+      await expectLater(
+        bloc.stream,
+        emits(
+          CharacterLoaded(
+            characters: [
+              tCharacter.copyWith(isFavorite: true),
+              secondCharacter,
+            ],
+          ),
+        ),
+      );
+    });
   });
 }

@@ -106,28 +106,29 @@ void main() {
 
         // assert
         verify(mockRemoteDataSource.getCharacters());
-        expect(result, equals(const Left(ServerFailure())));
+        expect(result, const Left(ServerFailure()));
       },
     );
   });
 
   group('toggleFavorite', () {
     test(
-      'should return updated character when toggling favorite is successful',
+      'should return updated favorites list when toggling favorite is successful',
       () async {
         // arrange
+        final expectedFavorites = [tCharacter.url];
         when(mockLocalDataSource.toggleFavorite(tCharacter.url))
             .thenAnswer((_) async => true);
+        when(mockLocalDataSource.getFavorites())
+            .thenAnswer((_) async => expectedFavorites);
 
         // act
         final result = await repository.toggleFavorite(tCharacter.url);
 
         // assert
         verify(mockLocalDataSource.toggleFavorite(tCharacter.url));
-        expect(
-          result,
-          equals(Right(tCharacter.copyWith(isFavorite: true))),
-        );
+        verify(mockLocalDataSource.getFavorites());
+        expect(result, equals(Right(expectedFavorites)));
       },
     );
 

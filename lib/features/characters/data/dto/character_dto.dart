@@ -34,4 +34,31 @@ class CharacterDTO {
       _$CharacterDTOFromJson(json);
 
   Map<String, dynamic> toJson() => _$CharacterDTOToJson(this);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CharacterDTO &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          birthYear == other.birthYear &&
+          eyeColor == other.eyeColor &&
+          gender == other.gender &&
+          hairColor == other.hairColor &&
+          height == other.height &&
+          mass == other.mass &&
+          skinColor == other.skinColor &&
+          url == other.url;
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      birthYear.hashCode ^
+      eyeColor.hashCode ^
+      gender.hashCode ^
+      hairColor.hashCode ^
+      height.hashCode ^
+      mass.hashCode ^
+      skinColor.hashCode ^
+      url.hashCode;
 }
