@@ -30,7 +30,7 @@ dev_dependencies:
   json_serializable: ^6.9.0
   mockito: ^5.4.4
   mocktail: ^1.0.4
-  flutter_launcher_icons: ^0.14.2
+  flutter_launcher_icons: ^0.14.3
 
 flutter_launcher_icons:
   android: "launcher_icon"
